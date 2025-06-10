@@ -34,6 +34,7 @@ def set_api_key():
 
 @app.route('/subscribe', methods=['POST'])
 def subscribe():
+    print('subscribe called')
     data = request.get_json()
     if not data or 'email' not in data:
         return jsonify({'error': 'email required'}), 400
@@ -53,8 +54,18 @@ def subscribe():
     }
     auth = ('anystring', api_key)
     response = requests.post(url, auth=auth, json=payload)
+
     if response.status_code in (200, 201):
         return jsonify({'status': 'subscribed'}), 200
+
+    # Перевірка, чи email вже підписаний
+    try:
+        error_details = response.json()
+        if error_details.get('title') == 'Member Exists':
+            return jsonify({'status': 'already subscribed'}), 200
+    except Exception as e:
+        print("JSON decode error or unexpected format:", e)
+
     return jsonify({'error': 'Mailchimp error', 'details': response.json()}), 400
 
 
