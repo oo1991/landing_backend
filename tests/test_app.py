@@ -14,15 +14,15 @@ def test_set_api_key(tmp_path, monkeypatch):
         assert config_file.exists()
 
 
-@patch('app.requests.post')
-def test_subscribe_with_mock(mock_post, tmp_path, monkeypatch):
+@patch('app.requests.put')
+def test_subscribe_with_mock(mock_put, tmp_path, monkeypatch):
     config_file = tmp_path / "config.json"
     monkeypatch.setattr('app.CONFIG_FILE', str(config_file))
     save_config({'api_key': 'key-us1', 'list_id': '123'})
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = {}
+    mock_put.return_value.status_code = 200
+    mock_put.return_value.json.return_value = {}
 
     with app.test_client() as client:
         resp = client.post('/subscribe', json={'email': 'test@example.com'})
         assert resp.status_code == 200
-        mock_post.assert_called()
+        mock_put.assert_called()
