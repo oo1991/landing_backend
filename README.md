@@ -28,3 +28,16 @@ Run unit tests with:
 ```bash
 pytest
 ```
+
+## Deploying as a systemd Service
+
+1. Copy `deployment/landing-backend.service` to `/etc/systemd/system/` on your server.
+2. Update `WorkingDirectory` and `ExecStart` if your code lives elsewhere.
+3. Reload systemd and enable the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now landing-backend
+```
+
+After the service is configured, the GitHub Actions workflow can restart it after copying files.

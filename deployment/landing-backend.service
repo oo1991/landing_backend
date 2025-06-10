@@ -1,0 +1,13 @@
+[Unit]
+Description=Landing Backend Flask API
+After=network.target
+
+[Service]
+# Update these paths if you place the repo elsewhere
+WorkingDirectory=/home/ubuntu/landing_backend
+ExecStart=/usr/bin/python3 /home/ubuntu/landing_backend/app.py
+Restart=always
+Environment=CONFIG_FILE=/home/ubuntu/landing_backend/config.json
+
+[Install]
+WantedBy=multi-user.target

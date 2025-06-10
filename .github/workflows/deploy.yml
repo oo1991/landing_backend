@@ -1,0 +1,56 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest
+
+      - name: Debug
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+          PORT: ${{ secrets.EC2_PORT }}
+          TARGET: ${{ secrets.EC2_PATH }}
+        run: |
+          echo "HOST: $HOST"
+          echo "USER: $USER"
+          echo "PORT: $PORT"
+          echo "TARGET: $TARGET"
+
+      - name: Deploy via SCP
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+          KEY: ${{ secrets.EC2_SSH_KEY }}
+          TARGET: ${{ secrets.EC2_PATH }}
+          PORT: ${{ secrets.EC2_PORT }}
+        run: |
+          echo "$KEY" > key.pem
+          chmod 600 key.pem
+          scp -o StrictHostKeyChecking=no -i key.pem -P ${PORT:-22} -r * "${USER}@${HOST}:${TARGET}"
+
+      - name: Restart Backend
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ${USER}@${HOST} << 'EOF'
+            sudo systemctl restart landing-backend || true
+          EOF
