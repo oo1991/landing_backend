@@ -8,6 +8,7 @@ This project provides a simple Flask server to store a Mailchimp API key and sub
 - `POST /subscribe` – Subscribe an email using the stored API key.
 - `POST /unsubscribe` – Remove an email from the mailing list.
 - `POST /status` – Return the current subscription status for an email.
+- `GET /snapshot` – Proxy snapshot data and truncate numeric values to two decimals. If the upstream service is unreachable, returns zeros for all fields.
 
 ## Running the server
 

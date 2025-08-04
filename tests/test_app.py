@@ -26,3 +26,40 @@ def test_subscribe_with_mock(mock_put, tmp_path, monkeypatch):
         resp = client.post('/subscribe', json={'email': 'test@example.com'})
         assert resp.status_code == 200
         mock_put.assert_called()
+
+
+@patch('app.requests.get')
+def test_snapshot(mock_get):
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {
+        'buyPresure': 80,
+        'largeTrades': 0.060386475175619125,
+        'mediumTrades': 0.060386475175619125,
+        'smallTrades': 99.87922668457031,
+        'timestamp': '2025-08-04T06:43:01Z'
+    }
+
+    with app.test_client() as client:
+        resp = client.get('/snapshot')
+        assert resp.status_code == 200
+        assert resp.get_json() == {
+            'buyPresure': 80,
+            'largeTrades': 0.06,
+            'mediumTrades': 0.06,
+            'smallTrades': 99.87,
+        }
+
+
+@patch('app.requests.get')
+def test_snapshot_error_returns_zeroes(mock_get):
+    mock_get.side_effect = Exception('boom')
+
+    with app.test_client() as client:
+        resp = client.get('/snapshot')
+        assert resp.status_code == 200
+        assert resp.get_json() == {
+            'buyPresure': 0,
+            'largeTrades': 0,
+            'mediumTrades': 0,
+            'smallTrades': 0,
+        }
