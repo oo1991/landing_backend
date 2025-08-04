@@ -5,6 +5,12 @@ import requests
 import hashlib
 from flask_cors import CORS
 
+
+def _truncate(value, decimals=2):
+    """Truncate a float without rounding."""
+    factor = 10 ** decimals
+    return int(value * factor) / factor
+
 CONFIG_FILE = os.environ.get('CONFIG_FILE', 'config.json')
 
 app = Flask(__name__)
@@ -153,6 +159,26 @@ def get_status():
         print("JSON decode error or unexpected format:", e)
 
     return jsonify({'error': 'Mailchimp error', 'details': response.json()}), 400
+
+
+@app.route('/snapshot', methods=['GET'])
+def snapshot():
+    """Fetch trading snapshot and truncate numeric fields."""
+    url = 'http://34.163.89.170:8088/snapshot'
+    try:
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+        data = resp.json() or {}
+    except Exception:
+        data = {}
+
+    result = {
+        'buyPresure': data.get('buyPresure', 0),
+        'largeTrades': _truncate(data.get('largeTrades', 0.0)),
+        'mediumTrades': _truncate(data.get('mediumTrades', 0.0)),
+        'smallTrades': _truncate(data.get('smallTrades', 0.0)),
+    }
+    return jsonify(result)
 
 
 if __name__ == '__main__':
